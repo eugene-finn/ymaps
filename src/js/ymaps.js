@@ -3,66 +3,54 @@ function initMap() {
     let myMap = new ymaps.Map('map', {
       center: [55.751574, 37.573856],
       zoom: 12
+    }, {
+      balloonMaxWidth: 200,
+      searchControlProvider: 'yandex#search'
     });
 
-    let cluster = new ymaps.Clusterer({
-      clusterDisableClickZoom: true,
-      clusterOpenBalloonOnClick: false,
-      clusterBalloonContentLayout: 'cluster#balloonCarousel',
-      clusterBalloonPanelMaxMapArea: 0,
-      clusterBalloonContentLayoutWidth: 320,
-      clusterBalloonContentLayoutWidth: 200,
-      clusterBalloonPagerSize: 5,
-      preset: 'islands#darkBlueClusterIcons',
-      balloonContentBody: 'balloonContentBody'
-    
+    myMap.geoObjects.add( //определение координат по IP
+      new ymaps.Placemark(
+        [ymaps.geolocation.latitude, ymaps.geolocation.longitude], {
+          balloonContentHeader: ymaps.geolocation.country,
+          balloonContent: ymaps.geolocation.city,
+          balloonContentFooter: ymaps.geolocation.region
+        }
+      )
+    );
+
+    myMap.events.add('click', function (e) {
+      let coords = e.get('coords');
+      console.log(coords);
+      
+      ymaps.geocode(coords).then(function (res) {
+            let firstGeoObject = res.geoObjects.get(0);
+            let address = firstGeoObject.properties.get('text');
+            console.log(address);
+      })
+
+      if (!myMap.balloon.isOpen()) {
+        myMap.balloon.open(coords, {
+          contentHeader: ['Событие!'],
+          contentBody: '<p>Кто-то щелкнул по карте.</p>' +
+            '<p>Координаты ' + [
+              coords[0].toPrecision(6),
+              coords[1].toPrecision(6)
+            ].join(', ') + '</p>',
+          contentFooter: '<sup>Щелкните еще раз</sup>'
+        });
+      } else {
+        myMap.balloon.close();
+      }
+
+      // const address = geocode.geoObjects.get(0)
+      // console.log(address);
+      // var myReverseGeocoder = ymaps.geocode([61.79, 34.36]);
+      // console.log(myReverseGeocoder);
+
     })
-    myMap.geoObjects.add(cluster);
-
-    var myPlacemark = new ymaps.Placemark([55.8, 37.6]);
-    myMap.geoObjects.add(myPlacemark);
-
-    var myPlacemark1 = new ymaps.Placemark([55.85, 32.64], {
-      // Задаем содержимое балуна метки.
-      // Это содержимое будет отображаться при клике по кластеру.
-      balloonContentHeader: 'Метка 1',
-      balloonContentBody: 'balloonContentBody'
-    });
-    myMap.geoObjects.add(myPlacemark1);
-    
-  });
+  })
 }
-
-function getMapPosition(e) {
-  const coords = e.get('coords');
-  const geocode = ymaps.geocode(coords);
-  const address = geocode.geoObjects.get(0).properties.get('text')
-
-  return {
-    address,
-    coords
-  }
-
-function createPlacemark(pos) {
-  const newPlacemark = new ymaps.Placemark(pos.coords, {
-    hintContent: pos.address,
-    balloonContent: `тык ${pos.address}`
-  });
-
-  cluster.add(newPlacemark);
-
-}
-
-}
-
-
-
-// myPlacemark.events.add('click', function () {
-//   console.log('ok');
-// });
-
 
 export {
-  initMap,
-  getMapPosition
+  initMap
 }
