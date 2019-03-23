@@ -1,55 +1,103 @@
-function initMap() {
-  ymaps.ready(function () {
-    let myMap = new ymaps.Map('map', {
-      center: [55.751574, 37.573856],
+ymaps.ready(init);
+
+function init() {
+  let myPlacemark,
+    myPoints = [{
+      coords: [55.77, 37.46],
+      time: '',
+      date: '',
+      placeName: 'Трактир',
+      author: 'Кирилл',
+      review: 'отлиный трактир'
+    }],
+    myMap = new ymaps.Map('map', {
+      center: [55.753994, 37.622093],
       zoom: 12
     }, {
       balloonMaxWidth: 200,
       searchControlProvider: 'yandex#search'
     });
 
-    myMap.geoObjects.add( //определение координат по IP
-      new ymaps.Placemark(
-        [ymaps.geolocation.latitude, ymaps.geolocation.longitude], {
-          balloonContentHeader: ymaps.geolocation.country,
-          balloonContent: ymaps.geolocation.city,
-          balloonContentFooter: ymaps.geolocation.region
-        }
-      )
-    );
+  // Слушаем клик на карте.
+  myMap.events.add('click', function (e) {
+    var coords = e.get('coords');
+    console.log(coords);
 
-    myMap.events.add('click', function (e) {
-      let coords = e.get('coords');
-      console.log(coords);
-      
-      ymaps.geocode(coords).then(function (res) {
-            let firstGeoObject = res.geoObjects.get(0);
-            let address = firstGeoObject.properties.get('text');
-            console.log(address);
-      })
+    // Если метка уже создана – просто передвигаем ее.
+    if (myPlacemark) {
+      myPlacemark.geometry.setCoordinates(coords);
+    }
+    // Если нет – создаем.
+    else {
+      myPlacemark = createPlacemark(coords);
+      myMap.geoObjects.add(myPlacemark);
+      // Слушаем событие окончания перетаскивания на метке.
+      // myPlacemark.events.add('dragend', function () {
+      //   getAddress(myPlacemark.geometry.getCoordinates());
+      // });
+    }
+    getAddress(coords);
+  });
 
-      if (!myMap.balloon.isOpen()) {
-        myMap.balloon.open(coords, {
-          contentHeader: ['Событие!'],
-          contentBody: '<p>Кто-то щелкнул по карте.</p>' +
-            '<p>Координаты ' + [
-              coords[0].toPrecision(6),
-              coords[1].toPrecision(6)
-            ].join(', ') + '</p>',
-          contentFooter: '<sup>Щелкните еще раз</sup>'
+  function createPlacemark(coordinates, review) {
+    let html = clusterTemplate(review);
+
+    let data = {
+      clusterCaption: html
+    };
+
+    let placemark = new ymaps.Placemark(coordinates, data);
+    this.clusterer.add(placemark);
+  }
+
+  myPlacemark = new ymaps.Placemark(
+    [lat, lng],
+    getPointData([inputPlace, inputReview, lat, lng, objectBalloon.date], response),
+    getPointOptions()
+  );
+
+  // Создание метки.
+  function createPlacemark(coords, review) {
+    return new ymaps.Placemark(coords, {
+      iconCaption: 'поиск...'
+    }, {
+      preset: 'islands#violetDotIconWithCaption',
+      draggable: false
+    });
+    this.clusterer.add(placemark);
+    createReview();
+  }
+
+  // Содание обзора (inputs)
+  function createReview(reviews) {
+    let templateFn = require('./templates/create-review.hbs');
+    return templateFn({
+      reviews: reviews
+    });
+  }
+
+  // Определяем адрес по координатам (обратное геокодирование).
+  function getAddress(coords) {
+    // myPlacemark.properties.set('iconCaption', 'поиск...');
+    ymaps.geocode(coords).then(function (res) {
+      var firstGeoObject = res.geoObjects.get(0);
+
+      myPlacemark.properties
+        .set({
+          // Формируем строку с данными об объекте.
+          iconCaption: [
+            // Название населенного пункта или вышестоящее административно-территориальное образование.
+            firstGeoObject.getLocalities().length ? firstGeoObject.getLocalities() : firstGeoObject.getAdministrativeAreas(),
+            // Получаем путь до топонима, если метод вернул null, запрашиваем наименование здания.
+            firstGeoObject.getThoroughfare() || firstGeoObject.getPremise()
+          ].filter(Boolean).join(', '),
+          // В качестве контента балуна задаем строку с адресом объекта.
+          balloonContent: firstGeoObject.getAddressLine()
         });
-      } else {
-        myMap.balloon.close();
-      }
-
-      // const address = geocode.geoObjects.get(0)
-      // console.log(address);
-      // var myReverseGeocoder = ymaps.geocode([61.79, 34.36]);
-      // console.log(myReverseGeocoder);
-
-    })
-  })
+    });
+  }
 }
+
 
 export {
   initMap

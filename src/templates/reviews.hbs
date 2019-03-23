@@ -1,0 +1,16 @@
+{{#if reviews}}
+{{#each reviews}}
+
+<div class="review">
+  <div class="review__author">{{author}}</div>
+  <div class="review__place">{{place}}</div>
+  <div class="review__date">{{date}}</div>
+  <div class="review__content">{{comment}}</div>
+</div>
+
+{{/each}}
+{{else}}
+
+<div class="review__none">Будьте первым! Добавьте пожалуйста свой отзыв об этом месте.</div>
+
+{{/if}}

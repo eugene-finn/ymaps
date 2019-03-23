@@ -1,4 +1,7 @@
-import { initMap, getMapPosition } from './js/ymaps';
+import {
+  initMap,
+  getMapPosition
+} from './js/ymaps';
 
 window.onload = initMap();
 
@@ -21,15 +24,15 @@ const map = document.querySelector('#map');
 
 
 
-const listPoints = [
-  {
-    name: 'Иван',
-    last_name: 'Иванов',
-  },
-  {
-    name: 'Олег',
-    last_name: 'Иванов',
-  }
-];
+// const listPoints = [
+//   {
+//     name: 'Иван',
+//     last_name: 'Иванов',
+//   },
+//   {
+//     name: 'Олег',
+//     last_name: 'Иванов',
+//   }
+// ];
 
 // map.innerHTML = render({listPoints});
